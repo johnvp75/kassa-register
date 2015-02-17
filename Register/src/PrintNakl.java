@@ -57,7 +57,6 @@ public class PrintNakl extends javax.swing.JDialog {
         jScrollPane1 = new javax.swing.JScrollPane();
         clientList = new javax.swing.JList();
         docPane = new javax.swing.JScrollPane();
-        printButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
         jButton1 = new javax.swing.JButton();
 
@@ -112,13 +111,6 @@ public class PrintNakl extends javax.swing.JDialog {
         });
         jScrollPane1.setViewportView(clientList);
 
-        printButton.setText("Печатать отмеченные");
-        printButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                printButtonActionPerformed(evt);
-            }
-        });
-
         cancelButton.setText("Закрыть");
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -138,13 +130,12 @@ public class PrintNakl extends javax.swing.JDialog {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(122, 122, 122)
-                .addComponent(jLabel2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 283, Short.MAX_VALUE)
-                .addComponent(jLabel3)
-                .addGap(215, 215, 215))
-            .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(122, 122, 122)
+                        .addComponent(jLabel2)
+                        .addGap(269, 269, 269)
+                        .addComponent(jLabel3))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(30, 30, 30)
                         .addComponent(jLabel1)
@@ -154,16 +145,13 @@ public class PrintNakl extends javax.swing.JDialog {
                         .addContainerGap()
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 291, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(32, 32, 32)
-                        .addComponent(docPane, javax.swing.GroupLayout.PREFERRED_SIZE, 325, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(docPane, javax.swing.GroupLayout.PREFERRED_SIZE, 303, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(89, 89, 89)
-                        .addComponent(printButton)
-                        .addGap(32, 32, 32)
-                        .addGap(16, 16, 16)
+                        .addGap(61, 61, 61)
                         .addComponent(jButton1)
-                        .addGap(57, 57, 57)
+                        .addGap(69, 69, 69)
                         .addComponent(cancelButton)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(261, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -182,7 +170,6 @@ public class PrintNakl extends javax.swing.JDialog {
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 229, Short.MAX_VALUE))
                 .addGap(26, 26, 26)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(printButton)
                     .addComponent(cancelButton)
                     .addComponent(jButton1))
                 .addGap(41, 41, 41))
@@ -218,67 +205,6 @@ public class PrintNakl extends javax.swing.JDialog {
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
         setVisible(false);
     }//GEN-LAST:event_cancelButtonActionPerformed
-
-    private void printButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_printButtonActionPerformed
-        Vector<Vector<String>> OutData = new Vector<Vector<String>>(0);
-        NumberFormat formatter = new DecimalFormat ( "0.00" ) ;
-        String numbs="";
-        int count=((JPanel)docPane.getViewport().getView()).getComponentCount();
-        for (int i=0;i<count;i++){
-            JCheckBox check=(JCheckBox)((JPanel)docPane.getViewport().getView()).getComponent(i);
-            if (check.isSelected())
-                numbs=numbs+check.getText().substring(0, check.getText().indexOf(" "))+", ";
-        }
-        numbs=numbs.substring(0, numbs.lastIndexOf(", "));
-        String Sql=String.format("select trim(t.name), t.kol, l.kol, l.cost*(1-l.disc/100)*(1-d.disc/100)*cn.curs, l.kol*l.cost*(1-l.disc/100)*(1-d.disc/100)*cn.curs from document d, lines l, curs_now cn, tovar t " +
-                "where d.numb in (%1$s) and to_char(d.day,'dd.mm.yyyy')='%2$td.%2$tm.%2$tY' " +
-                    "and d.id_client=(select id_client from client where name='%3$s') and d.id_type_doc=2 and cn.id_val=d.id_val and t.id_tovar=l.id_tovar and d.id_doc=l.id_doc", numbs, docDate.getDate(),getClName());
-        try{
-            ResultSet rs=DataSet.QueryExec("select max(nvl(numb1,0))+1 from document", false);
-            int numb=0;
-            if (rs.next())
-                numb=rs.getInt(1);
-            rs=DataSet.QueryExec(Sql, false);
-            int j=0;
-            double sum=0;
-            while (rs.next()){
-                Vector<String> Row=new Vector<String>(0);
-                j++;
-		Row.add(j+"");
-		Row.add(rs.getString(1));
-		Row.add(rs.getString(2));
-                Row.add(rs.getString(3));
-		Row.add(formatter.format(rs.getDouble(4)));
-		Row.add(formatter.format(rs.getDouble(5)));
-                sum=sum+rs.getDouble(5);
-		OutData.add(Row);
-            }
-            DataSet.UpdateQuery(String.format("update document set numb1=%1$s where numb in (%2$s) and to_char(day,'dd.mm.yyyy')='%3$td.%3$tm.%3$tY' " +
-                    " and id_type_doc=2", numb, numbs, docDate.getDate()));
-            DataSet.commit();
-            GregorianCalendar now=new GregorianCalendar();
-            int size=OutData.size();
-            OutputOO.OpenDoc("file://localhost/C:/report/Forms/nakl_of.ots",true,true);
-            OutputOO.InsertOne("\""+now.get(Calendar.DAY_OF_MONTH)+"\" "+Month(now.get(Calendar.MONTH))+" "+now.get(Calendar.YEAR)+"г.", 10, true, 5,1);
-            OutputOO.InsertOne("Накладная №"+numb, 16, true, 1, 2);
-            OutputOO.InsertOne("Получатель: "+getClName(),11, true, 1,5);
-            OutputOO.InsertOne("Итого со скидкой",10,false,2,10+size);
-            OutputOO.InsertOne(formatter.format(sum),10,false,6,10+size);
-            OutputOO.InsertOne("Отпустил:",10,false,2,12+size);
-            OutputOO.InsertOne("Получил:",10,false,5,12+size);
-            OutputOO.Insert(1, 9, OutData);
-            OutputOO.print(2);
-            OutputOO.CloseDoc();
-        }catch(Exception e){
-            try {
-                DataSet.rollback();
-                e.printStackTrace();
-            } catch (SQLException ex) {
-                JOptionPane.showMessageDialog(null, "Ошибка записи. Повторите.");
-                ex.printStackTrace();
-            }
-        }
-    }//GEN-LAST:event_printButtonActionPerformed
 
     private void docDateInputMethodTextChanged(java.awt.event.InputMethodEvent evt) {//GEN-FIRST:event_docDateInputMethodTextChanged
 
@@ -394,7 +320,6 @@ public class PrintNakl extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JButton printButton;
     // End of variables declaration//GEN-END:variables
     protected String clName;
 
