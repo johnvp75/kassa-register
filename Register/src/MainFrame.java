@@ -1,4 +1,3 @@
-
 import java.util.GregorianCalendar;
 import javax.swing.JOptionPane;
 import kassa.Fprn;
