@@ -6,6 +6,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.Stack;
 import java.util.Vector;
 import javax.swing.AbstractListModel;
 import javax.swing.JCheckBox;
@@ -193,6 +194,9 @@ public class PrintCheck extends javax.swing.JDialog {
     }//GEN-LAST:event_clientListValueChanged
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        Stack<LineItem> sellItems=new Stack<LineItem>();
+        Stack<LineItem> returnItems=new Stack<LineItem>();
+        LineItem item;
         String numbs="";
         int count=((JPanel)docPane.getViewport().getView()).getComponentCount();
         for (int i=0;i<count;i++){
@@ -206,14 +210,40 @@ public class PrintCheck extends javax.swing.JDialog {
                     "and d.id_client=(select id_client from client where name='%3$s') and d.id_type_doc=2 and cn.id_val=d.id_val and t.id_tovar=l.id_tovar and d.id_doc=l.id_doc", numbs, getDate(),getClName());
         try{
             ResultSet rs =DataSet.QueryExec(Sql, false);
+            while (rs.next()){
+                item=new LineItem(rs.getString(1), rs.getInt(2), rs.getDouble(3), rs.getInt(4));
+                if (item.count>0)
+                    sellItems.push(item);
+                if (item.count<0)
+                    returnItems.push(item);
+            }
+            if (returnItems.empty()&&sellItems.empty()){
+                JOptionPane.showMessageDialog(null, "В выделенных документах нет ни одной строки для печати", "Пустой документ", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+            if (!returnItems.empty()&&JOptionPane.showConfirmDialog(null, "В выделенных документах есть строки с отрицательным колличеством. \nЕсли Вы продолжите операцию, то будет напечатан чек на возврат товара.\n(Внимание при этом необходимо будет оформить дополнительные документы)\nПродолжить операцию?", "Возврат", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE)==JOptionPane.NO_OPTION){
+                return;
+            }
+
             if (fprinter.openCheck(1,fprinter.SELL,isTest())){
-                while (rs.next()){
-                    if (!fprinter.insertLine(rs.getString(1), rs.getInt(2), rs.getDouble(3), rs.getInt(4), isTest())){
+                while (!sellItems.empty()){
+                    item=sellItems.pop();
+                    if (!fprinter.insertLine(item.name,item.count,item.price,item.disc,isTest())){
                         return ;
                     }
                 }
                 fprinter.closeCheck(isTest());
             }
+            if (fprinter.openCheck(1,fprinter.RETURN,isTest())){
+                while (!returnItems.empty()){
+                    item=returnItems.pop();
+                    if (!fprinter.insertLine(item.name,item.count,item.price,item.disc,isTest())){
+                        return ;
+                    }
+                }
+                fprinter.closeCheck(isTest());
+            }
+            
         }catch(Exception ex){
             ex.printStackTrace();
         }
@@ -279,3 +309,4 @@ public class PrintCheck extends javax.swing.JDialog {
     }
     
 }
+
