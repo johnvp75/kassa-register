@@ -35,7 +35,7 @@ public class MainFrame extends javax.swing.JFrame {
         closeSession = new javax.swing.JButton();
         cashIncome = new javax.swing.JButton();
         cashOutcome = new javax.swing.JButton();
-        jButton6 = new javax.swing.JButton();
+        reportWithoutClosing = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
         summInCase = new javax.swing.JLabel();
         settings = new javax.swing.JButton();
@@ -87,10 +87,10 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
 
-        jButton6.setText("Отчет без закрытия");
-        jButton6.addActionListener(new java.awt.event.ActionListener() {
+        reportWithoutClosing.setText("Отчет без закрытия");
+        reportWithoutClosing.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton6ActionPerformed(evt);
+                reportWithoutClosingActionPerformed(evt);
             }
         });
 
@@ -132,7 +132,7 @@ public class MainFrame extends javax.swing.JFrame {
                             .addGap(63, 63, 63)
                             .addComponent(title, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addComponent(payment, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jButton6, javax.swing.GroupLayout.DEFAULT_SIZE, 180, Short.MAX_VALUE)
+                        .addComponent(reportWithoutClosing, javax.swing.GroupLayout.DEFAULT_SIZE, 180, Short.MAX_VALUE)
                         .addComponent(settings, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
@@ -161,7 +161,7 @@ public class MainFrame extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(cashOutcome)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jButton6)
+                .addComponent(reportWithoutClosing)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(settings)
                 .addGap(18, 18, 18)
@@ -175,30 +175,58 @@ public class MainFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void openSessionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openSessionActionPerformed
-        if (fprn.openDay(isTest()))
+        if (fprn.openDay(isTest())){
             openSession.setEnabled(false);
+            payment.setEnabled(true);
+            closeSession.setEnabled(!isTest());
+            cashIncome.setEnabled(true);
+            cashOutcome.setEnabled(true);
+            reportWithoutClosing.setEnabled(true);
+        }
     }//GEN-LAST:event_openSessionActionPerformed
 
-    private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
+    private void reportWithoutClosingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_reportWithoutClosingActionPerformed
         fprn.printReportWithoutClosing();
-    }//GEN-LAST:event_jButton6ActionPerformed
+    }//GEN-LAST:event_reportWithoutClosingActionPerformed
 
     private void formWindowOpened(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowOpened
         fprn=new Fprn();
         setSumm();
         title.setText(String.format("%1$td.%1$tm.%1$tY", new GregorianCalendar()));
-        openSession.setEnabled(!fprn.isSessionOpened());
-        
-            
+        boolean opened=fprn.isSessionOpened();
+        openSession.setEnabled(!opened);
+        payment.setEnabled(opened);
+        closeSession.setEnabled(opened);
+        cashIncome.setEnabled(opened);
+        cashOutcome.setEnabled(opened);
+        reportWithoutClosing.setEnabled(opened);
     }//GEN-LAST:event_formWindowOpened
 
     private void closeSessionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeSessionActionPerformed
-        if (fprn.closeDay())
+        if (fprn.closeDay()){
             openSession.setEnabled(true);
+            payment.setEnabled(false);
+            closeSession.setEnabled(false);
+            cashIncome.setEnabled(false);
+            cashOutcome.setEnabled(false);
+            reportWithoutClosing.setEnabled(false);
+        }
     }//GEN-LAST:event_closeSessionActionPerformed
 
     private void testBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_testBoxActionPerformed
         setTest(testBox.isSelected());
+        if (isTest()){
+            closeSession.setEnabled(false);
+            reportWithoutClosing.setEnabled(false);
+        }else{
+            boolean opened=fprn.isSessionOpened();
+            openSession.setEnabled(!opened);
+            payment.setEnabled(opened);
+            closeSession.setEnabled(opened);
+            cashIncome.setEnabled(opened);
+            cashOutcome.setEnabled(opened);
+            reportWithoutClosing.setEnabled(opened);
+        }
     }//GEN-LAST:event_testBoxActionPerformed
 
     private void paymentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_paymentActionPerformed
@@ -210,16 +238,20 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_paymentActionPerformed
 
     private void cashIncomeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cashIncomeActionPerformed
-        String inSumm;
+        String inSumm="";
         Double incomeCash=-1.00;
-        while (incomeCash<0){
+        while (inSumm!=null&&incomeCash<0){
             inSumm=JOptionPane.showInputDialog(null, "Введите вносимую сумму в рублях", "0.00");
             try{
                 incomeCash=new Double(inSumm.replace(',', '.'));
             }
-            catch(Exception ex){
+            catch(NumberFormatException ex){
                 JOptionPane.showMessageDialog(null, "Необходимо ввести число в формате 99999.99", "Ошибка", JOptionPane.ERROR_MESSAGE);
             }
+ //           catch(NullPointerException ex1){
+                
+ //           }
+            //
         }
         if (incomeCash<=0)
             return;
@@ -228,14 +260,14 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_cashIncomeActionPerformed
 
     private void cashOutcomeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cashOutcomeActionPerformed
-        String outSumm;
+        String outSumm="";
         Double outcomeCash=-1.00;
-        while (outcomeCash<0){
+        while (outSumm!=null&&outcomeCash<0){
             outSumm=JOptionPane.showInputDialog(null, "Введите выводимую сумму в рублях", "0.00");
             try{
                 outcomeCash=new Double(outSumm.replace(',', '.'));
             }
-            catch(Exception ex){
+            catch(NumberFormatException ex){
                 JOptionPane.showMessageDialog(null, "Необходимо ввести число в формате 99999.99", "Ошибка", JOptionPane.ERROR_MESSAGE);
             }
         }
@@ -294,10 +326,10 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JButton cashIncome;
     private javax.swing.JButton cashOutcome;
     private javax.swing.JButton closeSession;
-    private javax.swing.JButton jButton6;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JButton openSession;
     private javax.swing.JButton payment;
+    private javax.swing.JButton reportWithoutClosing;
     private javax.swing.JButton settings;
     private javax.swing.JLabel summInCase;
     private javax.swing.JCheckBox testBox;

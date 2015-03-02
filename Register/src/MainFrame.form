@@ -38,7 +38,7 @@
                           <Component id="title" min="-2" pref="89" max="-2" attributes="0"/>
                       </Group>
                       <Component id="payment" alignment="0" max="32767" attributes="0"/>
-                      <Component id="jButton6" pref="180" max="32767" attributes="0"/>
+                      <Component id="reportWithoutClosing" pref="180" max="32767" attributes="0"/>
                       <Component id="settings" alignment="0" max="32767" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="1" attributes="0">
@@ -74,7 +74,7 @@
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="cashOutcome" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-              <Component id="jButton6" min="-2" max="-2" attributes="0"/>
+              <Component id="reportWithoutClosing" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="settings" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="separate" max="-2" attributes="0"/>
@@ -136,12 +136,12 @@
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cashOutcomeActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JButton" name="jButton6">
+    <Component class="javax.swing.JButton" name="reportWithoutClosing">
       <Properties>
         <Property name="text" type="java.lang.String" value="&#x41e;&#x442;&#x447;&#x435;&#x442; &#x431;&#x435;&#x437; &#x437;&#x430;&#x43a;&#x440;&#x44b;&#x442;&#x438;&#x44f;"/>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton6ActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="reportWithoutClosingActionPerformed"/>
       </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel2">
