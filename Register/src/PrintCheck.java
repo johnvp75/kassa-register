@@ -59,6 +59,7 @@ public class PrintCheck extends javax.swing.JDialog {
         docPane = new javax.swing.JScrollPane();
         cancelButton = new javax.swing.JButton();
         jButton1 = new javax.swing.JButton();
+        discountBotton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         addComponentListener(new java.awt.event.ComponentAdapter() {
@@ -78,11 +79,6 @@ public class PrintCheck extends javax.swing.JDialog {
                 clientListMouseClicked(evt);
             }
         });
-        clientList.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
-            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
-                clientListValueChanged(evt);
-            }
-        });
         clientList.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
             public void propertyChange(java.beans.PropertyChangeEvent evt) {
                 clientListPropertyChange(evt);
@@ -91,6 +87,11 @@ public class PrintCheck extends javax.swing.JDialog {
         clientList.addVetoableChangeListener(new java.beans.VetoableChangeListener() {
             public void vetoableChange(java.beans.PropertyChangeEvent evt)throws java.beans.PropertyVetoException {
                 clientListVetoableChange(evt);
+            }
+        });
+        clientList.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
+                clientListValueChanged(evt);
             }
         });
         jScrollPane1.setViewportView(clientList);
@@ -106,6 +107,14 @@ public class PrintCheck extends javax.swing.JDialog {
         jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton1ActionPerformed(evt);
+            }
+        });
+
+        discountBotton.setText("Скидка");
+        discountBotton.setEnabled(false);
+        discountBotton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                discountBottonActionPerformed(evt);
             }
         });
 
@@ -126,10 +135,12 @@ public class PrintCheck extends javax.swing.JDialog {
                         .addGap(32, 32, 32)
                         .addComponent(docPane, javax.swing.GroupLayout.PREFERRED_SIZE, 303, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(158, 158, 158)
+                        .addGap(91, 91, 91)
                         .addComponent(jButton1)
                         .addGap(69, 69, 69)
-                        .addComponent(cancelButton)))
+                        .addComponent(cancelButton)
+                        .addGap(70, 70, 70)
+                        .addComponent(discountBotton)))
                 .addContainerGap(31, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -146,7 +157,8 @@ public class PrintCheck extends javax.swing.JDialog {
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cancelButton)
-                    .addComponent(jButton1))
+                    .addComponent(jButton1)
+                    .addComponent(discountBotton))
                 .addGap(49, 49, 49))
         );
 
@@ -154,6 +166,7 @@ public class PrintCheck extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void formComponentShown(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentShown
+//        setDate(new GregorianCalendar(2015, 1, 28));
         setDate(new GregorianCalendar());
         AbstractListModel clmodel;
         final Vector<String> clients =new Vector<String>();
@@ -194,24 +207,21 @@ public class PrintCheck extends javax.swing.JDialog {
     }//GEN-LAST:event_clientListValueChanged
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        if (getNumbsAsString()==null){
+                JOptionPane.showMessageDialog(null, "Необходимо отметить хоть один документ", "Нет документов", JOptionPane.INFORMATION_MESSAGE);
+                return;
+        }
         Stack<LineItem> sellItems=new Stack<LineItem>();
         Stack<LineItem> returnItems=new Stack<LineItem>();
         LineItem item;
-        String numbs="";
-        int count=((JPanel)docPane.getViewport().getView()).getComponentCount();
-        for (int i=0;i<count;i++){
-            JCheckBox check=(JCheckBox)((JPanel)docPane.getViewport().getView()).getComponent(i);
-            if (check.isSelected())
-                numbs=numbs+check.getText().substring(0, check.getText().indexOf(" "))+", ";
-        }
-        numbs=numbs.substring(0, numbs.lastIndexOf(", "));
-        String Sql=String.format("select trim(t.name), l.kol, l.cost*(1-l.disc/100)*cn.curs,d.disc from document d, lines l, curs_now cn, tovar t " +
+        String Sql=String.format("select trim(t.name), sum(l.kol), l.cost*(1-l.disc/100)*cn.curs,d.disc from document d, lines l, curs_now cn, tovar t " +
                 "where d.numb in (%1$s) and to_char(d.day,'dd.mm.yyyy')='%2$td.%2$tm.%2$tY' " +
-                    "and d.id_client=(select id_client from client where name='%3$s') and d.id_type_doc=2 and cn.id_val=d.id_val and t.id_tovar=l.id_tovar and d.id_doc=l.id_doc", numbs, getDate(),getClName());
+                    "and d.id_client=%3$s and d.id_type_doc=2 and cn.id_val=d.id_val and t.id_tovar=l.id_tovar and d.id_doc=l.id_doc group by trim(t.name),l.cost*(1-l.disc/100)*cn.curs,d.disc", getNumbsAsString(), getDate(),getClName());
         try{
             ResultSet rs =DataSet.QueryExec(Sql, false);
             while (rs.next()){
-                item=new LineItem(rs.getString(1), rs.getInt(2), rs.getDouble(3), rs.getInt(4));
+                double price=new Double(Math.round(rs.getDouble(3)*100))/100;
+                item=new LineItem(rs.getString(1), rs.getInt(2), price, rs.getInt(4));
                 if (item.count>0)
                     sellItems.push(item);
                 if (item.count<0)
@@ -224,8 +234,9 @@ public class PrintCheck extends javax.swing.JDialog {
             if (!returnItems.empty()&&JOptionPane.showConfirmDialog(null, "В выделенных документах есть строки с отрицательным колличеством. \nЕсли Вы продолжите операцию, то будет напечатан чек на возврат товара.\n(Внимание при этом необходимо будет оформить дополнительные документы)\nПродолжить операцию?", "Возврат", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE)==JOptionPane.NO_OPTION){
                 return;
             }
-
-            if (fprinter.openCheck(1,fprinter.SELL,isTest())){
+            
+            if (!sellItems.empty()&&fprinter.openCheck(1,fprinter.SELL,isTest())){
+//            if (!sellItems.empty()){                
                 while (!sellItems.empty()){
                     item=sellItems.pop();
                     if (!fprinter.insertLine(item.name,item.count,item.price,item.disc,isTest())){
@@ -233,8 +244,9 @@ public class PrintCheck extends javax.swing.JDialog {
                     }
                 }
                 fprinter.closeCheck(isTest());
+                fprinter.openCashBox();
             }
-            if (fprinter.openCheck(1,fprinter.RETURN,isTest())){
+            if (!returnItems.empty()&&fprinter.openCheck(1,fprinter.RETURN,isTest())){
                 while (!returnItems.empty()){
                     item=returnItems.pop();
                     if (!fprinter.insertLine(item.name,item.count,item.price,item.disc,isTest())){
@@ -242,21 +254,43 @@ public class PrintCheck extends javax.swing.JDialog {
                     }
                 }
                 fprinter.closeCheck(isTest());
+                fprinter.openCashBox();
             }
-            
+        setVisible(false);
         }catch(Exception ex){
             ex.printStackTrace();
         }
     }//GEN-LAST:event_jButton1ActionPerformed
 
-    private void clientChoose(){
-        if (clientList.getSelectedIndex()==-1)
+    private void discountBottonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_discountBottonActionPerformed
+        if (getNumbsAsString()==null){
+                JOptionPane.showMessageDialog(null, "Необходимо отметить хоть один документ", "Нет документов", JOptionPane.INFORMATION_MESSAGE);
+                return;
+        }
+        if(editDiscount!=null)
             return;
+        editDiscount=new EditDiscount(this, true, getId_client(), getNumbsAsString(), getClName());
+        editDiscount.setVisible(true);
+        editDiscount.dispose();
+        editDiscount=null;
+    }//GEN-LAST:event_discountBottonActionPerformed
+
+    private void clientChoose(){
+        if (clientList.getSelectedIndex()==-1){
+            discountBotton.setEnabled(false);
+            return;
+        }
+        
         try {
             setClName((String)clientList.getSelectedValue());
-            String Sql=String.format("select d.numb, d.sum from document d where to_char(d.day,'dd.mm.yyyy')='%1$td.%1$tm.%1$tY' " +
-                    "and d.id_client=(select id_client from client where name='%2$s') and d.id_type_doc=2 order by d.numb", getDate(),getClName());
+            String Sql=String.format("select id_client from client where name='%s'", getClName());
             ResultSet rs=DataSet.QueryExec(Sql, false);
+            rs.next();
+            setId_client(rs.getInt(1));
+            discountBotton.setEnabled(true);
+            Sql=String.format("select d.numb, d.sum from document d where to_char(d.day,'dd.mm.yyyy')='%1$td.%1$tm.%1$tY' " +
+                    "and d.id_client=%2$s and d.id_type_doc=2 order by d.numb", getDate(),getId_client());
+            rs=DataSet.QueryExec(Sql, false);
             JPanel p =new JPanel();
             int i=0;
             while (rs.next()){
@@ -269,6 +303,17 @@ public class PrintCheck extends javax.swing.JDialog {
             e.printStackTrace();
         }
     }
+    
+    private String getNumbsAsString(){
+        String numbs="";
+        int count=((JPanel)docPane.getViewport().getView()).getComponentCount();
+        for (int i=0;i<count;i++){
+            JCheckBox check=(JCheckBox)((JPanel)docPane.getViewport().getView()).getComponent(i);
+            if (check.isSelected())
+                numbs=numbs+check.getText().substring(0, check.getText().indexOf(" "))+", ";
+        }
+        return numbs.length()>0?numbs.substring(0, numbs.lastIndexOf(", ")):null;
+    }
     /**
     * @param args the command line arguments
     */
@@ -276,6 +321,7 @@ public class PrintCheck extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelButton;
     private javax.swing.JList clientList;
+    private javax.swing.JButton discountBotton;
     private javax.swing.JScrollPane docPane;
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel2;
@@ -284,6 +330,17 @@ public class PrintCheck extends javax.swing.JDialog {
     // End of variables declaration//GEN-END:variables
     protected String clName;
     private GregorianCalendar date;
+    private int id_client;
+    private int[] numbsi;
+    private EditDiscount editDiscount;
+    public int getId_client() {
+        return id_client;
+    }
+
+    public void setId_client(int id_client) {
+        this.id_client = id_client;
+    }
+
     public String getClName() {
         return clName;
     }
