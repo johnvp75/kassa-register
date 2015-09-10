@@ -216,7 +216,7 @@ public class PrintCheck extends javax.swing.JDialog {
         LineItem item;
         String Sql=String.format("select trim(t.name), sum(l.kol), l.cost*(1-l.disc/100)*cn.curs,d.disc from document d, lines l, curs_now cn, tovar t " +
                 "where d.numb in (%1$s) and to_char(d.day,'dd.mm.yyyy')='%2$td.%2$tm.%2$tY' " +
-                    "and d.id_client=%3$s and d.id_type_doc=2 and cn.id_val=d.id_val and t.id_tovar=l.id_tovar and d.id_doc=l.id_doc group by trim(t.name),l.cost*(1-l.disc/100)*cn.curs,d.disc", getNumbsAsString(), getDate(),getClName());
+                    "and d.id_client=%3$s and d.id_type_doc=2 and cn.id_val=d.id_val and t.id_tovar=l.id_tovar and d.id_doc=l.id_doc group by trim(t.name),l.cost*(1-l.disc/100)*cn.curs,d.disc", getNumbsAsString(), getDate(),getId_client());
         try{
             ResultSet rs =DataSet.QueryExec(Sql, false);
             while (rs.next()){
@@ -273,6 +273,7 @@ public class PrintCheck extends javax.swing.JDialog {
         editDiscount.setVisible(true);
         editDiscount.dispose();
         editDiscount=null;
+        clientChoose();
     }//GEN-LAST:event_discountBottonActionPerformed
 
     private void clientChoose(){

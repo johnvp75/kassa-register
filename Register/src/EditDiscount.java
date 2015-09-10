@@ -5,6 +5,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JComboBox;
@@ -343,14 +345,15 @@ on t.id_skl=alld.ID_SKL) ttt where ttt.disc!=nvl(ttt.new_disc,0)) table1 on (l.r
         // TODO add your handling code here:
         if (JOptionPane.showConfirmDialog(this, "Пересчитать и распечатать отмеченные документы?", "Печать", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE)==JOptionPane.YES_OPTION){
             String SQL;
-            SQL=String.format("merge into lines l using (select l_row,nvl(new_disc,0) as new_disc from (select t.l_row,t.disc,t.id_tovar,t.id_group,t.id_skl,nd.discount,alld.disc as new_disc from ((select l.rowid l_row, l.disc, l.id_tovar, k.id_group, d.ID_SKL from lines l, (select distinct ID_TOVAR,id_group from kart) k,document d where l.ID_DOC=d.ID_DOC and d.numb in ($2%s) and to_char(d.day,'DD.MM.YYYY')=to_char(sysdate,'DD.MM.YYYY') and l.ID_TOVAR=k.id_tovar) t "+
-                    "left join (select CONNECT_BY_ROOT disc discount, id_group,CONNECT_BY_ROOT id_skl id_skl from (select distinct g.id_group,g.PARENT_GROUP,d.disc,d.id_skl from GROUPID g left join (select id_group,disc,id_skl from discount where ID_CLIENT=$1%s) d on d.ID_GROUP=g.ID_GROUP start with g.ID_GROUP in (select id_group from discount where ID_CLIENT=$1%s and ID_GROUP is not null) CONNECT by g.PARENT_GROUP=prior g.ID_GROUP) start with not (disc is null) connect by parent_group= prior id_group and disc is null) nd on t.id_skl=nd.id_skl and t.id_group=nd.id_group) left join (select id_skl,disc from discount where ID_CLIENT=$1%s and ID_GROUP is null) alld "+
-                    "on t.id_skl=alld.ID_SKL) ttt where ttt.disc!=nvl(ttt.new_disc,0)) table1 on (l.rowid=table1.l_row) when matched then update set l.old_disc=l.disc,l.disc=table1.new_disc"
+            SQL=String.format("merge into lines l using (select l_row,nvl(discount,nvl(new_disc,0)) as new_disc from (select t.l_row,t.disc,t.id_tovar,t.id_group,t.id_skl,nd.discount,alld.disc as new_disc from ((select l.rowid l_row, l.disc, l.id_tovar, k.id_group, d.ID_SKL from lines l, (select distinct ID_TOVAR,id_group from kart) k,document d where l.ID_DOC=d.ID_DOC and d.numb in (%2$s) and to_char(d.day,'DD.MM.YYYY')=to_char(sysdate,'DD.MM.YYYY') and l.ID_TOVAR=k.id_tovar) t "+
+                    "left join (select CONNECT_BY_ROOT disc discount, id_group,CONNECT_BY_ROOT id_skl id_skl from (select distinct g.id_group,g.PARENT_GROUP,d.disc,d.id_skl from GROUPID g left join (select id_group,disc,id_skl from discount where ID_CLIENT=%1$s) d on d.ID_GROUP=g.ID_GROUP start with g.ID_GROUP in (select id_group from discount where ID_CLIENT=%1$s and ID_GROUP is not null) CONNECT by g.PARENT_GROUP=prior g.ID_GROUP) start with not (disc is null) connect by parent_group= prior id_group and disc is null) nd on t.id_skl=nd.id_skl and t.id_group=nd.id_group) left join (select id_skl,disc from discount where ID_CLIENT=%1$s and ID_GROUP is null) alld "+
+                    "on t.id_skl=alld.ID_SKL) ttt where ttt.disc!=nvl(discount,nvl(new_disc,0))) table1 on (l.rowid=table1.l_row) when matched then update set l.old_disc=l.disc,l.disc=table1.new_disc"
                     , getId(),docsNumbers);
             try{
                 int kol=DataSet.UpdateQuery(SQL);
                 if (kol==0) {
                     JOptionPane.showMessageDialog(this, "Документы не изменились. Печатать нечего.", "Нечего печатать", JOptionPane.INFORMATION_MESSAGE);
+//                    return;
                 }
                 SQL=String.format("merge into document d using " +
                 "(select id_doc,sum(kol*cost*(1-disc/100)) as sum from lines where ID_DOC in (select ID_DOC from document where numb in (%s) and to_char(day,'DD.MM.YYYY')=to_char(sysdate,'DD.MM.YYYY') ) group by id_doc) s " +
@@ -370,6 +373,8 @@ on t.id_skl=alld.ID_SKL) ttt where ttt.disc!=nvl(ttt.new_disc,0)) table1 on (l.r
                 ex.printStackTrace();
                 return;
             }
+            UniversalPrint.print(docsNumbers, true, new Integer((new GregorianCalendar()).get(Calendar.YEAR)).toString(),nameClient.getText());
+            setVisible(false);
         }
     }//GEN-LAST:event_recalcButtonActionPerformed
     /**
