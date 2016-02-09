@@ -69,11 +69,12 @@ public class UniversalPrint {
 				rs.next();
 				//sum=rs.getDouble(1);
 				String Suma=formatter.format(rs.getDouble(1))+" руб.";
-                                String curs_USD="";
+/*                                String curs_USD="";
                                 rs=DataSet.QueryExec("Select curs from curs_now where id_val=22", false);
 			
                                 if (rs.next())
                                     curs_USD= formatter.format(rs.getDouble(1));
+*/                                
                                 for(int k=0;k<id_docs.length;k++){
 //					Doc_count++;
 					int id=id_docs[k];
@@ -148,7 +149,7 @@ public class UniversalPrint {
 							OutputOO.InsertOne(formatter.format(rs.getDouble(1)),10,true,7,(repeat?startRow+6+(first?3:0):9)+size+2,repeat);
 							OutputOO.InsertOne("Документ оформил: "+rs.getString(5),8,false,2,(repeat?startRow+6+(first?3:0):9)+size+4,repeat);
 							if (last&&fullPrint) {
-								OutputOO.InsertOne("Итого по всем накладным ("+id_docs.length+" шт.): "+Suma+" (курс USD="+curs_USD+")",10,true,2,(repeat?startRow+6+(first?3:0):9)+size+6,repeat);
+								OutputOO.InsertOne("Итого по всем накладным ("+id_docs.length+" шт.): "+Suma,10,true,2,(repeat?startRow+6+(first?3:0):9)+size+6,repeat);
 //								if (SALE && amountOfDiscount>0)
 //									OutputOO.InsertOne(messageDiscount,10,true,2,(repeat?startRow+6+(first?3:0):9)+size+8,repeat);
 							}
