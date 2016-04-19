@@ -172,7 +172,7 @@ public class PrintCheck extends javax.swing.JDialog {
         final Vector<String> clients =new Vector<String>();
         try{
             String Sql=String.format("select distinct trim(c.name) from client c, document d where to_char(d.day,'dd.mm.yyyy')='%1$td.%1$tm.%1$tY' and " +
-                    " d.id_type_doc=2 and c.id_client=d.id_client and c.type=1 order by trim(c.name)", getDate());
+                    " d.id_type_doc=2 and c.id_client=d.id_client and c.type in (1,3) order by trim(c.name)", getDate());
             ResultSet rs=DataSet.QueryExec(Sql, false);
             while (rs.next())
                 clients.add(rs.getString(1));
